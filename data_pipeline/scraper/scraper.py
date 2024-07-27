@@ -60,16 +60,16 @@ class SjcWebsite:
         )
 
         if election_cycle:
-            el = driver.find_element_by_id("ctl00_DefaultContent_ASPxRoundPanel1_ASPxDDL_ElectionDate_I");
+            el = driver.find_element(By.ID ,"ctl00_DefaultContent_ASPxRoundPanel1_ASPxDDL_ElectionDate_I")
             el.click()
             sleep(1)
-            election_el = driver.find_element_by_xpath("//*[contains(text(), '{}')]".format(election_cycle))
+            election_el = driver.find_element(By.XPATH ,"//*[contains(text(), '{}')]".format(election_cycle))
             election_el.click()
             sleep(3)
 
         # Search, which will load up the content on the page.
         # Search terms are left blank, indicating "all content".
-        driver.find_element_by_id(self.SEARCH_BUTTON_ID).click()
+        driver.find_element(By.ID, self.SEARCH_BUTTON_ID).click()
 
     # Use the browser back button.
     def clickBackButton(self, driver):
@@ -90,16 +90,19 @@ class SjcWebsite:
     def downloadExcel(self, driver, countFile):
         # Finds all the Excel files linked on the page and downloads them.
         # First create array that handles ammendments, to ensure we're only downloading the latest/most accurate
-        numFormTableRows = driver.find_elements_by_xpath(
+        numFormTableRows = driver.find_elements(
+            By.XPATH,
             self.FORM_TABLE_ROW_XPATH_CONTAINS
         )
         downloadExcelRows = []
         count = 0
         for i in range(len(numFormTableRows)):
-            formTable_FormType = driver.find_elements_by_xpath(
+            formTable_FormType = driver.find_elements(
+                By.XPATH,
                 '//*[@id="{}{}"]/td[1]'.format(self.FORM_TABLE_ROW_ID, i)
             )[0].text
-            formTable_FilingPeriod = driver.find_elements_by_xpath(
+            formTable_FilingPeriod = driver.find_elements(
+                By.XPATH,
                 '//*[@id="{}{}"]/td[4]'.format(self.FORM_TABLE_ROW_ID, i)
             )[0].text
             if "-A" in formTable_FormType:
@@ -110,7 +113,8 @@ class SjcWebsite:
 
             downloadExcelRows.append(uniqueKeyFormId)
             try:
-                downloadLinkElement = driver.find_elements_by_xpath(
+                downloadLinkElement = driver.find_elements(
+                    By.XPATH,
                     '//*[@id="{}{}"]/td[6]/a'.format(self.FORM_TABLE_ROW_ID, i)
                 )[0]
             except IndexError:
@@ -134,10 +138,10 @@ class SjcWebsite:
 
     # Returns a boolean.
     def errorDialogExists(self, driver):
-        return driver.find_elements_by_id(self.ERROR_DIALOG_BUTTON_ID)
+        return driver.find_elements(By.ID, self.ERROR_DIALOG_BUTTON_ID)
 
     def closeErrorDialog(self, driver):
-        driver.find_element_by_id(self.ERROR_DIALOG_BUTTON_ID).click()
+        driver.find_element(By.ID, self.ERROR_DIALOG_BUTTON_ID).click()
         WebDriverWait(driver, 10).until(
             EC.invisibility_of_element_located((By.ID, self.ERROR_DIALOG_BUTTON_ID))
         )
@@ -145,16 +149,16 @@ class SjcWebsite:
     # Navigates to the Nth page of the search results.
     def navigateToPage(self, driver, target_page):
         try:
-            driver.find_element_by_class_name("dxp-current")
+            driver.find_element(By.CLASS_NAME, "dxp-current")
         except NoSuchElementException:
             assert target_page == 1, "Page nums will not load if there is only and exactly one page."
             return
         while (
-            driver.find_element_by_class_name("dxp-current") and
+            driver.find_element(By.CLASS_NAME, "dxp-current") and
             not "[{}]".format(target_page)
-            == driver.find_element_by_class_name("dxp-current").text
+            == driver.find_element(By.CLASS_NAME, "dxp-current").text
         ):
-            page_elements = driver.find_elements_by_class_name("dxp-num")
+            page_elements = driver.find_elements(By.CLASS_NAME, "dxp-num")
 
             page_nums = []
             for el in page_elements:
@@ -183,7 +187,7 @@ class SjcWebsite:
 
     # Determine the number of pages of search results present.
     def numPages(self, driver):
-        page_elements = driver.find_elements_by_class_name("dxp-num")
+        page_elements = driver.find_elements(By.CLASS_NAME,"dxp-num")
         page_nums = []
         for el in page_elements:
             try:
@@ -196,16 +200,18 @@ class SjcWebsite:
 
     # Determines the number of
     def numberOfEntries(self, driver):
-        return len(driver.find_elements_by_xpath(self.PAGE_ENTRY_XPATH))
+        return len(driver.find_elements(By.XPATH, self.PAGE_ENTRY_XPATH))
 
     def clickEntryIndex(self, driver, index):
-        driver.find_element_by_xpath(
+        driver.find_element(
+            By.XPATH,
             '//*[@id="ctl00_GridContent_gridFilers_DXCBtn{}"]'.format(index)
         ).click()
 
     def numTableEntries(self, driver, search_page_num):
         # Loop through all all items in the search table and retrieve the data
-        numTableRows = driver.find_elements_by_xpath(
+        numTableRows = driver.find_elements(
+            By.XPATH,
             self.SEARCH_TABLE_ROW_XPATH_CONTAINS
         )
         followTableRowNums = (search_page_num - 1) * 10
@@ -215,15 +221,15 @@ class SjcWebsite:
         return numTableRowEntries
 
     def extractTableData(self, driver, entry_index):
-        tableData_CandNameL = driver.find_elements_by_xpath('//*[@id="{}{}"]/td[4]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
-        tableData_CandNameF = driver.find_elements_by_xpath('//*[@id="{}{}"]/td[5]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
+        tableData_CandNameL = driver.find_elements(By.XPATH, '//*[@id="{}{}"]/td[4]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
+        tableData_CandNameF = driver.find_elements(By.XPATH, '//*[@id="{}{}"]/td[5]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
 
-        self.FILERNAME = driver.find_elements_by_xpath('//*[@id="{}{}"]/td[3]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
+        self.FILERNAME = driver.find_elements(By.XPATH, '//*[@id="{}{}"]/td[3]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
         self.CANDIDATENAME = '{} {}'.format(tableData_CandNameF, tableData_CandNameL)
         print('CANIDATE NAME ->{}<-'.format(self.CANDIDATENAME))
 
-        self.ELECTIONDATE = driver.find_elements_by_xpath('//*[@id="{}{}"]/td[2]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
-        self.BALLOTITEM = driver.find_elements_by_xpath('//*[@id="{}{}"]/td[7]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
+        self.ELECTIONDATE = driver.find_elements(By.XPATH, '//*[@id="{}{}"]/td[2]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
+        self.BALLOTITEM = driver.find_elements(By.XPATH, '//*[@id="{}{}"]/td[7]'.format(self.SEARCH_TABLE_ROW_ID, entry_index))[0].text
 
 class Scraper:
     def __init__(self):
@@ -263,7 +269,9 @@ class Scraper:
             "plugins.plugins_list": [plugs],
         }
         options.add_experimental_option("prefs", prefs)
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        service = webdriver.ChromeService(executable_path=ChromeDriverManager().install())
+        
+        self.driver = webdriver.Chrome(options, service)
 
 
     def scrape(self, election_cycle=None):
@@ -311,7 +319,8 @@ s = Scraper()
 
 # Can use election_cycle='11/3/2020' to load only the latest elections data.
 # Can use election_cycle=None to load all election data.
-s.scrape(election_cycle='6/7/2022')
+# s.scrape(election_cycle='6/7/2022')
+s.website.preprocessing.aggregateData()
 print(
     "--- Finished ---\n---    In    ---\n--- {} ---".format(
         time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))

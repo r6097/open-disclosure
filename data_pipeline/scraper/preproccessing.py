@@ -41,21 +41,33 @@ class PreProcessing():
             # Loop through all workbooks (EXCEL)
             header = False
             for filename in filenames:
+                print(filename)
                 # Open worksheet
-                wb = xlrd.open_workbook(filename)
-                sheet = wb.sheet_by_index(0)
+                df = pd.read_excel(filename)
+                # print(df.columns)
+                # wb = xlrd.open_workbook(filename)
+                # sheet = wb.sheet_by_index(0)
 
                 # Only pull excel header from the first file to reduce duplicates
                 if not header:
-                    new_worksheet.writerow(sheet.row_values(0))
+                    new_worksheet.writerow(list(df.columns.values))
                     header = True
-                for rownum in range(1, sheet.nrows):
+                # print(len(df.columns))
+                for rownum in range(0, df.shape[0]):
                     # Skip duplicated entries.
-                    transaction_id = sheet.row_values(rownum)[12]
-                    if transaction_id in transactions:
-                        continue
-                    transactions.add(transaction_id)
-                    new_worksheet.writerow(sheet.row_values(rownum))
+                    # transaction_id = sheet.row_values(rownum)[12]
+                    # print(rownum)
+                    try:
+                        transaction_id = df["Tran_ID"].iloc[rownum]
+                        if transaction_id in transactions:
+                            continue
+                        # print(df.iloc[rownum])
+                        transactions.add(transaction_id)
+                        new_worksheet.writerow(df.iloc[rownum])
+                    except Exception as e:
+                        print(e)
+                        return
+                    
 
     def insertColumns(self, numDownloads, CandidateName, ElectionDate, BallotItem):
         print('Processing {} for {}'.format(numDownloads, CandidateName))
@@ -76,19 +88,23 @@ class PreProcessing():
             filename = path.basename(fullfilepathname)
             print(filename)
 
-            wb = xlrd.open_workbook(fullfilepathname, logfile=open(devnull, 'w'))
-            errordTypes = ['Cmte_ID', 'Intr_Nam L', 'Intr_City', 'Intr_ST', 'Off_S_H_Cd', 'XRef_Match']
-            data = pd.read_excel(wb, dtype={datatype: str for datatype in errordTypes})
+            try: 
+                wb = xlrd.open_workbook(fullfilepathname, logfile=open(devnull, 'w'))
+                errordTypes = ['Cmte_ID', 'Intr_Nam L', 'Intr_City', 'Intr_ST', 'Off_S_H_Cd', 'XRef_Match']
+                data = pd.read_excel(wb, dtype={datatype: str for datatype in errordTypes})
 
-            if CandidateName == "   ":
-                data.insert(0, candidateHeader, "Independent")
-            else:
-                data.insert(0, candidateHeader, CandidateName)
-            
-            data.insert(0, electionDateHeader, ElectionDate)
-            data.insert(0, ballotItemHeader, BallotItem)
+                if CandidateName == "   ":
+                    data.insert(0, candidateHeader, "Independent")
+                else:
+                    data.insert(0, candidateHeader, CandidateName)
 
-            data.to_excel('{}/{}'.format(new_folder, filename), index=False)
+                data.insert(0, electionDateHeader, ElectionDate)
+                data.insert(0, ballotItemHeader, BallotItem)
+            except xlrd.biffh.XLRDError as e:
+                print('Warning: {} is not a valid excel file and was not read'.format(filename))
+
+
+            data.to_excel('{}/{}'.format(new_folder, filename + 'x'), index=False)
     
     def insertColumnsHelper(self):
         partial_download = True
